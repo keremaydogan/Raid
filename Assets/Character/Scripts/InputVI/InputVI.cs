@@ -36,6 +36,8 @@ public class InputVI : InputManager
         public Collider2D GetCol() { return col; }
     }
 
+    AStarPathfinder aStar = new AStarPathfinder();
+
     HashSet<Enemy> enemiesInSight = new HashSet<Enemy>{};
 
     Enemy targetEnemy = null;
@@ -56,6 +58,7 @@ public class InputVI : InputManager
     //SET DESTINATION
     Vector3[] map = new Vector3[0];
     bool destIsReachable = false;
+    Vector3[] path = new Vector3[0];
 
     public InputVI()
     {
@@ -72,6 +75,8 @@ public class InputVI : InputManager
         memSightLen = sightLens[2];
         absSightLays = sightLayMasks[0];
         norSightLays = sightLayMasks[1];
+
+        aStar.AStarAwake();
     }
 
     public override void InpMngStart(PlayerControls playerControl)
@@ -205,10 +210,7 @@ public class InputVI : InputManager
         {
             path = checkWayNor.collider.gameObject.transform.parent.Find("Path").GetComponent<VertexPath>().GetPath();
 
-            if(path == null)
-            {
-                break;
-            }
+            if(path == null) { break; }
 
             Transform pathParent = checkWayNor.collider.gameObject.transform.parent;
             AddToMap(path);
@@ -257,13 +259,20 @@ public class InputVI : InputManager
 
             checkWayNor = Physics2D.Raycast(path[closestPointInd], targetPos - path[closestPointInd], (targetPos - path[closestPointInd]).magnitude, norSightLays);
 
-            if (targetEnemy.GetCol().Equals(checkWayNor.collider))
-            {
-                Debug.DrawRay(path[closestPointInd], Vector3.up, Color.red);
-                Debug.DrawRay(path[closestPointInd], checkWayNor.collider.transform.position - path[closestPointInd]);
-            }
-
+            //if (targetEnemy.GetCol().Equals(checkWayNor.collider))
+            //{
+            //    Debug.DrawRay(path[closestPointInd], Vector3.up, Color.red);
+            //    Debug.DrawRay(path[closestPointInd], checkWayNor.collider.transform.position - path[closestPointInd]);
+            //}
         }
+
+        path = aStar.ShortestPath(selfPos, targetPos, map);
+
+        //for (int i = 0; i < path.Length - 1; i++)
+        //{
+        //    Debug.DrawRay(path[i], Vector3.up, Color.magenta);
+        //    Debug.DrawRay(path[i], path[i + 1], Color.magenta);
+        //}
     }
 
     private bool IsEnemyCol(Collider2D col)
