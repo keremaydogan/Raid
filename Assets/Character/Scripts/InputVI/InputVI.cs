@@ -57,7 +57,6 @@ public class InputVI : InputManager
 
     //SET DESTINATION
     Vector3[] map = new Vector3[0];
-    bool destIsReachable = false;
     Vector3[] path = new Vector3[0];
 
     public InputVI()
@@ -266,20 +265,14 @@ public class InputVI : InputManager
 
             checkWayNor = Physics2D.Raycast(path[closestPointInd], targetPos - path[closestPointInd], (targetPos - path[closestPointInd]).magnitude, norSightLays);
 
-            //if (targetEnemy.GetCol().Equals(checkWayNor.collider))
-            //{
-            //    Debug.DrawRay(path[closestPointInd], Vector3.up, Color.red);
-            //    Debug.DrawRay(path[closestPointInd], checkWayNor.collider.transform.position - path[closestPointInd]);
-            //}
         }
 
         path = aStar.ShortestPath(selfPos, targetPos, map);
 
-        //for (int i = 0; i < path.Length - 1; i++)
-        //{
-        //    Debug.DrawRay(path[i], Vector3.up, Color.magenta);
-        //    Debug.DrawRay(path[i], path[i + 1], Color.magenta);
-        //}
+        for (int i = 0; i < path.Length; i++)
+        {
+            Debug.DrawRay(path[i], Vector3.up, Color.red);
+        }
     }
 
     private bool IsEnemyCol(Collider2D col)

@@ -69,8 +69,6 @@ public class AStarPathfinder
         float GTemp;
         float FMin;
 
-        int repeat = 0;
-
 
         while (currentNodeInd != map.Length - 1)
         {
@@ -122,53 +120,47 @@ public class AStarPathfinder
 
         }
 
-
-        //return CompileWay();
-
-        return new Vector3[0];
+        return CompileWay();
     }
 
     private Vector3[] CompileWay()
     {
-        Debug.Log("COMPILE");
-
         RaycastHit2D checkWayNor;
 
         List<Node> parents = new List<Node>();
         List<Vector3> way = new List<Vector3>();
 
         Node currentNode = map[map.Length - 1];
-        Node parentNode = map[currentNode.parentNodeInd];
+        Node parentNode;
+
+        while(currentNode.parentNodeInd != -1)
+        {
+            parentNode = map[currentNode.parentNodeInd];
+            parents.Add(parentNode);
+            currentNode = parentNode;
+        }
+
+        currentNode = map[map.Length - 1];
 
         while (!currentNode.Equals(map[0]))
         {
-            while (!parentNode.Equals(null))
-            {
-                parents.Add(parentNode);
-                currentNode = parentNode;
-                parentNode = map[currentNode.parentNodeInd];
-            }
-
-            for(int i = 0; i < parents.Count; i++)
+            way.Add(currentNode.position);
+            for(int i = parents.Count - 1; i > -1; i--)
             {
                 checkWayNor = Physics2D.Raycast(currentNode.position, parents[i].position - currentNode.position, (parents[i].position - currentNode.position).magnitude, obstacleLays);
-                if (checkWayNor.collider == null)
+                if(checkWayNor.collider == null)
                 {
                     currentNode = parents[i];
-                    way.Add(parents[i].position);
                     break;
                 }
             }
+
         }
 
         way.Reverse();
 
-        for(int i = 0; i < way.ToArray().Length; i++)
-        {
-            Debug.DrawRay(way.ToArray()[i], Vector3.up, Color.red);
-        }
-
         return way.ToArray();
+        
     }
 
 }
