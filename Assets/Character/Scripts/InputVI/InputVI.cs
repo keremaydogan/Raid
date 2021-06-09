@@ -190,8 +190,15 @@ public class InputVI : InputManager
     {
         if(targetEnemy != null)
         {
-            destination = selfPos;
-            SetMap();
+            RaycastHit2D checkWay = Physics2D.Raycast(selfPos, targetPos - selfPos, (targetPos - selfPos).magnitude, norSightLays);
+            if (checkWay.collider.Equals(targetEnemy.GetCol()))
+            {
+                destination = selfPos;
+            }
+            else
+            {
+                SetMap();
+            }
         }
         else
         {

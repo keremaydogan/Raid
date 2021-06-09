@@ -67,19 +67,24 @@ public class AStarPathfinder
         HashSet<int> walkableNodeInds = new HashSet<int>();
 
         float GTemp;
-        float FMax;
+        float FMin;
 
         int repeat = 0;
 
+
         while (currentNodeInd != map.Length - 1)
         {
+            Debug.DrawRay(map[currentNodeInd].position, Vector3.up, Color.magenta);
+
             map[currentNodeInd].nodeState = NodeState.Closed;
+            walkableNodeInds.Remove(currentNodeInd);
 
             for (int i = 0; i < map.Length; i++)
             {
                 if (map[i].nodeState == NodeState.Closed) { continue; }
 
                 checkWayNor = Physics2D.Raycast(map[currentNodeInd].position, (map[i].position - map[currentNodeInd].position), (map[i].position - map[currentNodeInd].position).magnitude, obstacleLays);
+
                 if (checkWayNor.collider == null)
                 {
                     GTemp = map[currentNodeInd].G + (map[i].position - map[currentNodeInd].position).magnitude;
@@ -91,44 +96,32 @@ public class AStarPathfinder
                     }
 
                     walkableNodeInds.Add(i);
+
                 }
             }
 
-            FMax = float.MaxValue;
+            if(walkableNodeInds.Count == 0) { break; }
 
-            Debug.Log("walkableNodeInds.Count " + walkableNodeInds.Count);
+            FMin = float.MaxValue;
 
             foreach (int ind in walkableNodeInds)
             {
                 if (map[ind].Equals(map[map.Length - 1]))
                 {
-                    map[ind].parentNodeInd = currentNodeInd;
-                    currentNodeInd = map.Length - 1;
+                    nextNodeInd = ind;
                     break;
                 }
-                if (map[ind].F < FMax || (map[ind].F == FMax && map[ind].H > map[currentNodeInd].H))
+                if (FMin > map[ind].F || (FMin > map[ind].F && map[ind].H < map[nextNodeInd].H))
                 {
-                    Debug.Log("AAA " + ind);
-                    FMax = map[ind].F;
+                    FMin = map[ind].F;
                     nextNodeInd = ind;
                 }
             }
 
-            Debug.Log("nextNodeInd " + nextNodeInd);
-            map[nextNodeInd].parentNodeInd = currentNodeInd;
             currentNodeInd = nextNodeInd;
 
-            repeat++;
-            if (repeat == 10) { break; }
         }
 
-        for (int i = 0; i < map.Length; i++)
-        {
-            if (map[i].nodeState == NodeState.Closed)
-            {
-                Debug.DrawRay(map[i].position, Vector3.up, Color.magenta);
-            }
-        }
 
         //return CompileWay();
 
@@ -169,6 +162,12 @@ public class AStarPathfinder
         }
 
         way.Reverse();
+
+        for(int i = 0; i < way.ToArray().Length; i++)
+        {
+            Debug.DrawRay(way.ToArray()[i], Vector3.up, Color.red);
+        }
+
         return way.ToArray();
     }
 
