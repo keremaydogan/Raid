@@ -56,10 +56,14 @@ public class MovementBasics : MonoBehaviour
     float crouchCoef = 1;
     float speedCoef;
 
-    RaycastHit2D wallCheck;
-    Vector3 wallCheckOriginShift;
-    bool wallIsNear;
-    LayerMask wallLayerMask;
+    //InputIV
+    LayerMask obstacleLays;
+    int horCheckCnst;
+    int verCheckCnst;
+    float horOffsetCnst = 0;
+    float verOffsetCnst = 0;
+    RaycastHit2D wallHorCheck;
+    RaycastHit2D wallVerCheck;
 
     float movementX;
     float movementY;
@@ -88,7 +92,7 @@ public class MovementBasics : MonoBehaviour
         bodyCol = transform.Find("Body").GetComponent<CapsuleCollider2D>();
         feetCol = transform.Find("Feet").GetComponent<CapsuleCollider2D>();
 
-        wallLayerMask = LayerMask.GetMask("Room");
+        obstacleLays = LayerMask.GetMask("Room");
 
         inpMng = inpManagers[(int)inpMngSelection];
         int[] sightLens = { absSightLen, norSightLen, memSightLen };
@@ -202,39 +206,46 @@ public class MovementBasics : MonoBehaviour
 
     private void InputsIV()
     {
-        wallCheck = Physics2D.Raycast(transform.position + wallCheckOriginShift, inpMng.dest - transform.position, feetCol.size.x + 0.2f, wallLayerMask);
-        wallIsNear = wallCheck.collider != null;
+        horCheckCnst = 1;
+        verCheckCnst = 1;
+        if ((inpMng.dest.x - transform.position.x) < 0) { horCheckCnst = -1; } else if ((inpMng.dest.x - transform.position.x) == 0) { horCheckCnst = 0; }
+        if ((inpMng.dest.y - transform.position.y) < 0) { verCheckCnst = -1; } else if ((inpMng.dest.y - transform.position.y) == 0) { verCheckCnst = 0; }
+        wallHorCheck = Physics2D.Raycast(transform.position + (horOffsetCnst * Vector3.up), horCheckCnst * Vector3.right, feetCol.size.x + 0.2f, obstacleLays);
+        wallVerCheck = Physics2D.Raycast(transform.position + (verOffsetCnst * Vector3.right), verCheckCnst * Vector3.up, feetCol.size.x + 0.2f, obstacleLays);
 
-        Vector3 destVector = (inpMng.dest - transform.position).normalized;
-        float angleWithWall = Vector3.SignedAngle(wallCheck.normal, destVector, Vector3.back);
-        Vector3 movementVec = Vector3.zero;
+        Debug.DrawRay(transform.position + (horOffsetCnst * Vector3.up), horCheckCnst * Vector3.right, Color.red);
+        Debug.DrawRay(transform.position + (verOffsetCnst * Vector3.right), verCheckCnst * Vector3.up, Color.red);
 
-        if (angleWithWall == 0)
-        {
-            movementVec = inpMng.dest - transform.position;
-            wallCheckOriginShift = Vector3.zero;
-        }
-        else if(wallCheck.normal.y == 0 && wallCheck.normal.x != 0) {
-            movementVec = new Vector3(wallCheck.normal.y * -Mathf.Sign(angleWithWall), wallCheck.normal.x * -Mathf.Sign(angleWithWall));
-            wallCheckOriginShift = -movementVec;
-        }
-        else if (wallCheck.normal.x == 0 && wallCheck.normal.y != 0)
-        {
-            movementVec = new Vector3(wallCheck.normal.y * Mathf.Sign(angleWithWall), wallCheck.normal.x * Mathf.Sign(angleWithWall));
-            wallCheckOriginShift = -movementVec;
-        }
-
-        movementX = movementVec.x;
-        movementY = movementVec.y;
-
-        if((inpMng.dest - transform.position).magnitude > 0.4f)
-        {
-            movementDir = new Vector3(movementX, movementY).normalized;
-        }
-        else
+        if((inpMng.dest - transform.position).magnitude < 0.4f)
         {
             movementDir = Vector3.zero;
         }
+        else
+        {
+
+            if (wallHorCheck.collider == null && wallVerCheck.collider == null)
+            {
+                horOffsetCnst = 0;
+                verOffsetCnst = 0;
+
+                movementDir = (inpMng.dest - transform.position).normalized;
+            }
+            else
+            {
+                if (wallHorCheck.collider != null)
+                {
+                    movementDir = verCheckCnst * Vector3.up;
+                    horOffsetCnst = -verCheckCnst * feetCol.size.y;
+                }
+                if (wallVerCheck.collider != null)
+                {
+                    movementDir = horCheckCnst * Vector3.right;
+                    verOffsetCnst = -horCheckCnst * feetCol.size.x;
+                }
+            }
+
+        }
+
     }
 
     private void Walk()

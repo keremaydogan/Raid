@@ -57,8 +57,6 @@ public class VertexPathEditor : Editor
             HandlePosition(i);
         }
 
-        
-        
     }
 
 

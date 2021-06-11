@@ -11,6 +11,21 @@ public class AStarPathfinder
 
     LayerMask obstacleLays;
 
+    RaycastHit2D checkWayNor;
+
+    //RoughWay
+    int currentNodeInd;
+    int nextNodeInd;
+    HashSet<int> walkableNodeInds;
+    float GTemp;
+    float FMin;
+
+    //CompileWay
+    List<Node> parents;
+    List<Vector3> way;
+    Node currentNode;
+    Node parentNode;
+
     public void AStarAwake()
     {
         obstacleLays = LayerMask.GetMask("Room");
@@ -70,16 +85,9 @@ public class AStarPathfinder
 
     private void RoughWay(Vector3 endPoint)
     {
-        RaycastHit2D checkWayNor;
-
-        int currentNodeInd = 0;
-        int nextNodeInd = -1;
-        HashSet<int> walkableNodeInds = new HashSet<int>();
-
-        float GTemp;
-        float FMin;
-
-        int repeat = 0;
+        currentNodeInd = 0;
+        nextNodeInd = -1;
+        walkableNodeInds = new HashSet<int>();
 
         while (currentNodeInd != map.Length - 1)
         {
@@ -129,35 +137,22 @@ public class AStarPathfinder
             }
 
             currentNodeInd = nextNodeInd;
-
-
-            repeat++;
-            if (repeat == map.Length) { break; }
         }
     }
 
 
     private Vector3[] CompileWay()
     {
-        RaycastHit2D checkWayNor;
+        parents = new List<Node>();
+        way = new List<Vector3>();
 
-        List<Node> parents = new List<Node>();
-        List<Vector3> way = new List<Vector3>();
-
-        Node currentNode = map[map.Length - 1];
-        Node parentNode;
-
-        int repeat = 0;
+        currentNode = map[map.Length - 1];
 
         while (currentNode.parentNodeInd != -1)
         {
             parentNode = map[currentNode.parentNodeInd];
             parents.Add(parentNode);
             currentNode = parentNode;
-
-
-            repeat++;
-            if (repeat == map.Length) { break; }
         }
 
         currentNode = map[map.Length - 1];
@@ -173,10 +168,6 @@ public class AStarPathfinder
                     break;
                 }
             }
-
-
-            repeat++;
-            if (repeat == map.Length) { break; }
 
         }
 

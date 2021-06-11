@@ -197,12 +197,11 @@ public class InputVI : InputManager
             RaycastHit2D checkWay = Physics2D.Raycast(selfPos, targetPos - selfPos, (targetPos - selfPos).magnitude, norSightLays);
             if (checkWay.collider.Equals(targetEnemy.GetCol()))
             {
-                destination = selfPos;
+                destination = targetPos;
             }
             else
             {
-                SetMap();
-                destination = selfPos;
+                NextStop();
             }
         }
         else
@@ -217,9 +216,8 @@ public class InputVI : InputManager
         Collider2D[] pathCols;
         VertexPath[] pathObjects;
         map = new List<Vector3>();
-        Vector3[] pathPart = new Vector3[0];
-        Vector3[] path = new Vector3[0];
-
+        Vector3[] mapPart = new Vector3[0];
+        
         pathCols = Physics2D.OverlapCircleAll(selfPos + ((targetPos - selfPos) / 2), Mathf.Abs((selfPos - targetPos).magnitude/2) + 10, pathMask);
 
         pathObjects = new VertexPath[pathCols.Length];
@@ -231,16 +229,23 @@ public class InputVI : InputManager
 
         for(int i = 0; i < pathObjects.Length; i++)
         {
-            pathPart = pathObjects[i].GetPath();
-            for(int j = 0; j < pathPart.Length; j++)
+            mapPart = pathObjects[i].GetPath();
+            for(int j = 0; j < mapPart.Length; j++)
             {
-                map.Add(pathPart[j]);
-                Debug.DrawRay(pathPart[j], Vector3.up, Color.green);
+                map.Add(mapPart[j]);
+                Debug.DrawRay(mapPart[j], Vector3.up, Color.green);
             }
         }
+    }
+
+
+    private void NextStop()
+    {
+        SetMap();
+
+        Vector3[] path = new Vector3[0];
 
         path = aStar.ShortestPath(selfPos, targetPos, map.ToArray());
-
 
         for (int i = 0; i < path.Length - 1; i++)
         {
@@ -250,12 +255,7 @@ public class InputVI : InputManager
         Debug.DrawRay(path[path.Length - 1], Vector3.up, Color.red);
         Debug.DrawLine(selfPos, path[0], Color.white);
 
-    }
-
-
-    private bool IsEnemyCol(Collider2D col)
-    {
-        return targetEnemy.GetCol().Equals(col);
+        destination = path[0];
     }
 
 }
