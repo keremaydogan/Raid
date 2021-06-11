@@ -56,8 +56,11 @@ public class InputVI : InputManager
     int memSightLen;
 
     //SET DESTINATION
-    Vector3[] map = new Vector3[0];
+    List<Vector3> map;
     Vector3[] path = new Vector3[0];
+    LayerMask pathMask;
+
+    //Vector3[] map = new Vector3[0];
 
     public InputVI()
     {
@@ -76,6 +79,8 @@ public class InputVI : InputManager
         norSightLays = sightLayMasks[1];
 
         aStar.AStarAwake();
+
+        pathMask = LayerMask.GetMask("Path");
     }
 
     public override void InpMngStart(PlayerControls playerControl)
@@ -197,6 +202,7 @@ public class InputVI : InputManager
             else
             {
                 SetMap();
+                destination = selfPos;
             }
         }
         else
@@ -205,94 +211,52 @@ public class InputVI : InputManager
         }
     }
 
+
     private void SetMap()
     {
-        RaycastHit2D checkWayNor = Physics2D.Raycast(selfPos, targetPos - selfPos, (targetPos - selfPos).magnitude, norSightLays);
-
-        map = new Vector3[0];
+        Collider2D[] pathCols;
+        VertexPath[] pathObjects;
+        map = new List<Vector3>();
+        Vector3[] pathPart = new Vector3[0];
         Vector3[] path = new Vector3[0];
 
-        while (!IsEnemyCol(checkWayNor.collider) && checkWayNor.collider.gameObject.transform.parent != null)
+        pathCols = Physics2D.OverlapCircleAll(selfPos + ((targetPos - selfPos) / 2), Mathf.Abs((selfPos - targetPos).magnitude/2) + 10, pathMask);
+
+        pathObjects = new VertexPath[pathCols.Length];
+
+        for (int i = 0; i < pathObjects.Length; i++)
         {
-            path = checkWayNor.collider.gameObject.transform.parent.Find("Path").GetComponent<VertexPath>().GetPath();
-
-            if(path == null) { break; }
-
-            Transform pathParent = checkWayNor.collider.gameObject.transform.parent;
-            AddToMap(path);
-
-            int closestPointInd = -1;
-            float minDist = float.MaxValue;
-
-            for (int i = 0; i < path.Length; i++)
-            {
-                Debug.DrawRay(path[i], Vector3.up, Color.green);
-
-                checkWayNor = Physics2D.Raycast(path[i], targetPos - path[i], (targetPos - path[i]).magnitude, norSightLays);
-
-                if (IsEnemyCol(checkWayNor.collider) && (checkWayNor.collider.transform.position - path[i]).magnitude < minDist)
-                {
-                    minDist = (checkWayNor.collider.transform.position - path[i]).magnitude;
-                    closestPointInd = i;
-                }
-            }
-
-            if(closestPointInd == -1)
-            {
-                for (int i = 0; i < path.Length; i++)
-                {
-                    RaycastHit2D checkWayDir = Physics2D.Raycast(path[i], targetPos - path[i], (targetPos - path[i]).magnitude, absSightLays);
-
-                    if (IsEnemyCol(checkWayDir.collider) && (checkWayDir.collider.transform.position - path[i]).magnitude < minDist)
-                    {
-                        checkWayNor = Physics2D.Raycast(path[i], targetPos - path[i], (targetPos - path[i]).magnitude, norSightLays);
-                        if (checkWayNor.collider.gameObject.transform.parent == pathParent)
-                        {
-                            continue;
-                        }
-
-                        minDist = (checkWayDir.collider.transform.position - path[i]).magnitude;
-                        closestPointInd = i;
-                    }
-                }
-            }
-            
-            if(closestPointInd == -1)
-            {
-                Debug.Log("There is no way");
-                break;
-            }
-
-            checkWayNor = Physics2D.Raycast(path[closestPointInd], targetPos - path[closestPointInd], (targetPos - path[closestPointInd]).magnitude, norSightLays);
-
+            pathObjects[i] = pathCols[i].transform.parent.Find("Path").GetComponent<VertexPath>();
         }
 
-        path = aStar.ShortestPath(selfPos, targetPos, map);
+        for(int i = 0; i < pathObjects.Length; i++)
+        {
+            pathPart = pathObjects[i].GetPath();
+            for(int j = 0; j < pathPart.Length; j++)
+            {
+                map.Add(pathPart[j]);
+                Debug.DrawRay(pathPart[j], Vector3.up, Color.green);
+            }
+        }
 
-        for (int i = 0; i < path.Length; i++)
+        path = aStar.ShortestPath(selfPos, targetPos, map.ToArray());
+
+
+        for (int i = 0; i < path.Length - 1; i++)
         {
             Debug.DrawRay(path[i], Vector3.up, Color.red);
+            Debug.DrawLine(path[i], path[i + 1], Color.white);
         }
+        Debug.DrawRay(path[path.Length - 1], Vector3.up, Color.red);
+        Debug.DrawLine(selfPos, path[0], Color.white);
+
     }
+
 
     private bool IsEnemyCol(Collider2D col)
     {
         return targetEnemy.GetCol().Equals(col);
     }
 
-
-    private void AddToMap(Vector3[] path)
-    {
-        Vector3[] newMap = new Vector3[map.Length + path.Length];
-        for(int i = 0; i < map.Length; i++)
-        {
-            newMap[i] = map[i];
-        }
-        for (int i = 0; i < path.Length; i++)
-        {
-            newMap[map.Length + i] = path[i];
-        }
-        map = newMap;
-    }
 }
 

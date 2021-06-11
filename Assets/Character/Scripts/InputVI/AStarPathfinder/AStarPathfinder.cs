@@ -35,6 +35,18 @@ public class AStarPathfinder
         }
     }
 
+    
+
+    public Vector3[] ShortestPath(Vector3 startPoint, Vector3 endPoint, Vector3[] pointMap)
+    {
+        SetMap(startPoint, endPoint, pointMap);
+
+        RoughWay(endPoint);
+
+        return CompileWay();
+    }
+
+
     private void SetMap(Vector3 startPoint, Vector3 endPoint, Vector3[] pointMap)
     {
         map = new Node[pointMap.Length + 2];
@@ -52,14 +64,12 @@ public class AStarPathfinder
         for (int i = 0; i < pointMap.Length; i++)
         {
             map[i + 1] = new Node(pointMap[i]);
-            map[i + 1].H = (endPoint - pointMap[i]).magnitude;
         }
     }
 
-    public Vector3[] ShortestPath(Vector3 startPoint, Vector3 endPoint, Vector3[] pointMap)
-    {
-        SetMap(startPoint, endPoint, pointMap);
 
+    private void RoughWay(Vector3 endPoint)
+    {
         RaycastHit2D checkWayNor;
 
         int currentNodeInd = 0;
@@ -69,6 +79,7 @@ public class AStarPathfinder
         float GTemp;
         float FMin;
 
+        int repeat = 0;
 
         while (currentNodeInd != map.Length - 1)
         {
@@ -93,12 +104,13 @@ public class AStarPathfinder
                         map[i].parentNodeInd = currentNodeInd;
                     }
 
+                    map[i].H = (endPoint - map[i].position).magnitude;
                     walkableNodeInds.Add(i);
 
                 }
             }
 
-            if(walkableNodeInds.Count == 0) { break; }
+            if (walkableNodeInds.Count == 0) { break; }
 
             FMin = float.MaxValue;
 
@@ -118,10 +130,12 @@ public class AStarPathfinder
 
             currentNodeInd = nextNodeInd;
 
-        }
 
-        return CompileWay();
+            repeat++;
+            if (repeat == map.Length) { break; }
+        }
     }
+
 
     private Vector3[] CompileWay()
     {
@@ -133,34 +147,41 @@ public class AStarPathfinder
         Node currentNode = map[map.Length - 1];
         Node parentNode;
 
-        while(currentNode.parentNodeInd != -1)
+        int repeat = 0;
+
+        while (currentNode.parentNodeInd != -1)
         {
             parentNode = map[currentNode.parentNodeInd];
             parents.Add(parentNode);
             currentNode = parentNode;
+
+
+            repeat++;
+            if (repeat == map.Length) { break; }
         }
 
         currentNode = map[map.Length - 1];
-
         while (!currentNode.Equals(map[0]))
         {
             way.Add(currentNode.position);
-            for(int i = parents.Count - 1; i > -1; i--)
+            for (int i = parents.Count - 1; i > -1; i--)
             {
                 checkWayNor = Physics2D.Raycast(currentNode.position, parents[i].position - currentNode.position, (parents[i].position - currentNode.position).magnitude, obstacleLays);
-                if(checkWayNor.collider == null)
+                if (checkWayNor.collider == null)
                 {
                     currentNode = parents[i];
                     break;
                 }
             }
 
+
+            repeat++;
+            if (repeat == map.Length) { break; }
+
         }
 
         way.Reverse();
 
         return way.ToArray();
-        
     }
-
 }
