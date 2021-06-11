@@ -60,10 +60,8 @@ public class MovementBasics : MonoBehaviour
     LayerMask obstacleLays;
     int horCheckCnst;
     int verCheckCnst;
-    float horOffsetCnst = 0;
-    float verOffsetCnst = 0;
-    RaycastHit2D wallHorCheck;
-    RaycastHit2D wallVerCheck;
+    Collider2D wallHorCheck;
+    Collider2D wallVerCheck;
 
     float movementX;
     float movementY;
@@ -210,11 +208,9 @@ public class MovementBasics : MonoBehaviour
         verCheckCnst = 1;
         if ((inpMng.dest.x - transform.position.x) < 0) { horCheckCnst = -1; } else if ((inpMng.dest.x - transform.position.x) == 0) { horCheckCnst = 0; }
         if ((inpMng.dest.y - transform.position.y) < 0) { verCheckCnst = -1; } else if ((inpMng.dest.y - transform.position.y) == 0) { verCheckCnst = 0; }
-        wallHorCheck = Physics2D.Raycast(transform.position + (horOffsetCnst * Vector3.up), horCheckCnst * Vector3.right, feetCol.size.x + 0.2f, obstacleLays);
-        wallVerCheck = Physics2D.Raycast(transform.position + (verOffsetCnst * Vector3.right), verCheckCnst * Vector3.up, feetCol.size.x + 0.2f, obstacleLays);
 
-        Debug.DrawRay(transform.position + (horOffsetCnst * Vector3.up), horCheckCnst * Vector3.right, Color.red);
-        Debug.DrawRay(transform.position + (verOffsetCnst * Vector3.right), verCheckCnst * Vector3.up, Color.red);
+        wallHorCheck = Physics2D.OverlapBox((transform.position + Vector3.right * horCheckCnst * feetCol.size.x), new Vector2(0.2f, feetCol.size.y), 0, obstacleLays);
+        wallVerCheck = Physics2D.OverlapBox((transform.position + Vector3.up * verCheckCnst * feetCol.size.y), new Vector2(feetCol.size.x, 0.2f), 0, obstacleLays);
 
         if((inpMng.dest - transform.position).magnitude < 0.4f)
         {
@@ -223,24 +219,19 @@ public class MovementBasics : MonoBehaviour
         else
         {
 
-            if (wallHorCheck.collider == null && wallVerCheck.collider == null)
+            if (wallHorCheck == null && wallVerCheck == null)
             {
-                horOffsetCnst = 0;
-                verOffsetCnst = 0;
-
                 movementDir = (inpMng.dest - transform.position).normalized;
             }
             else
             {
-                if (wallHorCheck.collider != null)
+                if (wallHorCheck != null)
                 {
                     movementDir = verCheckCnst * Vector3.up;
-                    horOffsetCnst = -verCheckCnst * feetCol.size.y;
                 }
-                if (wallVerCheck.collider != null)
+                if (wallVerCheck != null)
                 {
                     movementDir = horCheckCnst * Vector3.right;
-                    verOffsetCnst = -horCheckCnst * feetCol.size.x;
                 }
             }
 
